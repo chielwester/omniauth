@@ -4,7 +4,7 @@ module OmniAuth
   module Strategies
     autoload :OAuth,              'omniauth/strategies/oauth'
     autoload :OAuth2,             'omniauth/strategies/oauth2'
-    
+
     autoload :Twitter,            'omniauth/strategies/twitter'
     autoload :LinkedIn,           'omniauth/strategies/linked_in'
     autoload :Facebook,           'omniauth/strategies/facebook'
@@ -18,5 +18,6 @@ module OmniAuth
     autoload :Meetup,             'omniauth/strategies/meetup'
     autoload :SoundCloud,         'omniauth/strategies/sound_cloud'
     autoload :SmugMug,            'omniauth/strategies/smug_mug'
+    autoload :LiveId,             'omniauth/strategies/live_id'
   end
 end
