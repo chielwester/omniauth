@@ -22,7 +22,10 @@ module OmniAuth
         :city => 'http://axschema.org/contact/city/home',
         :state => 'http://axschema.org/contact/state/home',
         :website => 'http://axschema.org/contact/web/default',
-        :image => 'http://axschema.org/media/image/aspect11'
+        :image => 'http://axschema.org/media/image/aspect11',
+        :street => 'http://axschema.org/contact/postalAddress/home',
+        :postal_code => 'http://axschema.org/contact/postalCode/home',
+        :date_of_birth => 'http://axschema.org/birthDate'
       }
 
       # Initialize the strategy as a Rack Middleware.
@@ -39,7 +42,7 @@ module OmniAuth
         super(app, (options[:name] || :open_id), &block)
         @options = options
         @options[:required] ||= [AX[:email], AX[:name], AX[:first_name], AX[:last_name], 'email', 'fullname']
-        @options[:optional] ||= [AX[:nickname], AX[:city], AX[:state], AX[:website], AX[:image], 'postcode', 'nickname']
+        @options[:optional] ||= [AX[:nickname], AX[:city], AX[:state], AX[:website], AX[:image], AX[:postal_code], AX[:street], 'nickname']
         @store = store
       end
 
@@ -121,8 +124,11 @@ module OmniAuth
         }.reject{|k,v| v.nil? || v == ''}
       end
 
+      def ax
+        @ax ||= ::OpenID::AX::FetchResponse.from_success_response(@openid_response)
+      end
+
       def ax_user_info(response)
-        ax = ::OpenID::AX::FetchResponse.from_success_response(response)
         return {} unless ax
         {
           'email' => ax.get_single(AX[:email]),
@@ -131,6 +137,9 @@ module OmniAuth
           'name' => (ax.get_single(AX[:name]) || [ax.get_single(AX[:first_name]), ax.get_single(AX[:last_name])].join(' ')).strip,
           'location' => ("#{ax.get_single(AX[:city])}, #{ax.get_single(AX[:state])}" if Array(ax.get_single(AX[:city])).any? && Array(ax.get_single(AX[:state])).any?),
           'nickname' => ax.get_single(AX[:nickname]),
+          'postal_code' => ax.get_single(AX[:postal_code]),
+          'street' => ax.get_single(AX[:street]),
+          'city' => ax.get_single(AX[:city]),
           'urls' => ({'Website' => Array(ax.get_single(AX[:website])).first} if Array(ax.get_single(AX[:website])).any?)
         }.inject({}){|h,(k,v)| h[k] = Array(v).first; h}.reject{|k,v| v.nil? || v == ''}
       end
