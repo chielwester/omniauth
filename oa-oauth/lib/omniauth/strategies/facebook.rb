@@ -23,6 +23,7 @@ module OmniAuth
 
       def request_phase
         options[:scope] ||= "email,offline_access"
+        options[:display] = "popup"
         super
       end
 
