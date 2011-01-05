@@ -16,16 +16,16 @@ module OmniAuth
       def initialize(app, client_id = nil, client_secret = nil, options = {}, &block)
         super(app, :facebook, client_id, client_secret, {:site => 'https://graph.facebook.com/'}, options, &block)
       end
-      
+
       def user_data
         @data ||= MultiJson.decode(@access_token.get('/me', {}, { "Accept-Language" => "en-us,en;"}))
       end
-      
+
       def request_phase
         options[:scope] ||= "email,offline_access"
         super
       end
-      
+
       def user_info
         {
           'nickname' => user_data["link"].split('/').last,
@@ -40,7 +40,7 @@ module OmniAuth
           }
         }
       end
-      
+
       def auth_hash
         OmniAuth::Utils.deep_merge(super, {
           'uid' => user_data['id'],
