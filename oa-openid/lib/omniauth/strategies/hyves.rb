@@ -24,15 +24,22 @@ module OmniAuth
         )
       end
 
+      def ax_street(ax)
+        ax.get_single(AX[:street])
+      end
+
       def street(ax)
+        return nil if ax_street(ax).blank?
         ax.get_single(AX[:street]).to_s.split(/\s/)[1.. -1].join(' ')
       end
 
       def house_number(ax)
+        return nil if ax_street(ax).blank?
         ax.get_single(AX[:street]).to_s.split(/\s/).first.scan(/^[0-9]+/).first
       end
 
       def house_number_addition(ax)
+        return nil if ax_street(ax).blank?
         ax.get_single(AX[:street]).to_s.split(/\s/).first.scan(/[A-Za-z]+/).first
       end
     end

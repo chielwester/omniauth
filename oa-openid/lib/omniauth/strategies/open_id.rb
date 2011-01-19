@@ -140,6 +140,7 @@ module OmniAuth
           'postal_code' => ax.get_single(AX[:postal_code]),
           'street' => ax.get_single(AX[:street]),
           'city' => ax.get_single(AX[:city]),
+          'image' => ax.get_single(AX[:image]),
           'urls' => ({'Website' => Array(ax.get_single(AX[:website])).first} if Array(ax.get_single(AX[:website])).any?)
         }.inject({}){|h,(k,v)| h[k] = Array(v).first; h}.reject{|k,v| v.nil? || v == ''}
       end
