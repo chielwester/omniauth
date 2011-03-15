@@ -27,6 +27,23 @@ module OmniAuth
         super
       end
 
+      def build_access_token
+        if facebook_session.nil? || facebook_session.empty?
+          super
+        else
+          @access_token = ::OAuth2::AccessToken.new(client, facebook_session['access_token'])
+        end
+      end
+
+      def facebook_session
+        session_cookie = request.cookies["fbs_#{client.id}"]
+        if session_cookie
+          @facebook_session ||= Rack::Utils.parse_query(request.cookies["fbs_#{client.id}"].gsub('"', ''))
+        else
+          nil
+        end
+      end
+
       def user_info
         {
           'nickname' => user_data["link"].split('/').last,
@@ -48,10 +65,6 @@ module OmniAuth
           'user_info' => user_info,
           'extra' => {'user_hash' => user_data}
         })
-      end
-
-      def filter_callback_params(query_string)
-        "&#{query_string}".gsub(/(&code=[^&]*)/, '')[1..-1].to_s
       end
     end
   end

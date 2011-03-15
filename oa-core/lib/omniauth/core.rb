@@ -1,17 +1,16 @@
 require 'rack'
 require 'singleton'
-require 'omniauth/form'
 
 module OmniAuth
-
   autoload :Builder,  'omniauth/builder'
   autoload :Strategy, 'omniauth/strategy'
   autoload :Test,     'omniauth/test'
+  autoload :Form,     'omniauth/form'
 
   module Strategies
     autoload :Password, 'omniauth/strategies/password'
   end
-  
+
   def self.strategies
     @@strategies ||= []
   end
@@ -21,11 +20,23 @@ module OmniAuth
 
     @@defaults = {
       :path_prefix => '/auth',
-      :on_failure => Proc.new do |env, message_key|
+      :on_failure => Proc.new do |env|
+        message_key = env['omniauth.error.type']
         new_path = "#{OmniAuth.config.path_prefix}/failure?message=#{message_key}"
-        [302, {'Location' => "#{new_path}", 'Content-Type'=> 'text/html'}, []]
+        [302, {'Location' => new_path, 'Content-Type'=> 'text/html'}, []]
       end,
-      :form_css => Form::DEFAULT_CSS
+      :form_css => Form::DEFAULT_CSS,
+      :test_mode => false,
+      :allowed_request_methods => [:get, :post],
+      :mock_auth => {
+        :default => {
+          'provider' => 'default',
+          'uid' => '1234',
+          'user_info' => {
+            'name' => 'Bob Example'
+          }
+        }
+      }
     }
 
     def self.defaults
@@ -44,16 +55,37 @@ module OmniAuth
       end
     end
 
-    attr_writer :on_failure
-    attr_accessor :path_prefix, :form_css
-  end
+    def add_mock(provider, mock={})
+      # Stringify keys recursively one level.
+      mock.stringify_keys!
+      mock.keys.each do|key|
+        if mock[key].is_a? Hash
+          mock[key].stringify_keys!
+        end
+      end
 
+      # Merge with the default mock and ensure provider is correct.
+      mock = self.mock_auth[:default].dup.merge(mock)
+      mock["provider"] = provider.to_s
+
+      # Add it to the mocks.
+      self.mock_auth[provider.to_sym] = mock
+    end
+
+    attr_writer :on_failure
+    attr_accessor :path_prefix, :allowed_request_methods, :form_css, :test_mode, :mock_auth, :full_host
+  end
+  
   def self.config
     Configuration.instance
   end
 
   def self.configure
     yield config
+  end
+
+  def self.mock_auth_for(provider)
+    config.mock_auth[provider.to_sym] || config.mock_auth[:default]
   end
 
   module Utils
@@ -65,7 +97,9 @@ module OmniAuth
       'github' => 'GitHub',
       'tripit' => 'TripIt',
       'soundcloud' => 'SoundCloud',
-      'smugmug' => 'SmugMug'
+      'smugmug' => 'SmugMug',
+      'cas' => 'CAS',
+      'trademe' => 'TradeMe'
     }
 
     module_function
